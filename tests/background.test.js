@@ -4,7 +4,21 @@
   const hats = () => Object.entries(state.sessions);
   const userTabs = () => [...tabs.values()];
 
-  // ⌘T: a blank new tab becomes a tab in Hat 1.
+  const send = (msg) => fire("runtime.onMessage", msg);
+
+  // Default: normal tabs stay in the everyday session; no hat is created.
+  check("auto is off by default", state.auto === false);
+  const plain = await browser.tabs.create({ url: "about:newtab" });
+  await fire("tabs.onCreated", { ...plain });
+  check("⌘T by default stays a normal tab", hats().length === 0 && tabs.has(plain.id));
+  await browser.tabs.remove(plain.id);
+  const manual = await send({ type: "newIsolated", tab: { windowId: 1, index: 0 } });
+  check("New hat button opens a hat on request", hats().length === 1);
+  await send({ type: "hatForget", id: hats()[0][0] });
+  check("forgetting it leaves none", hats().length === 0);
+
+  // With "every new tab gets its own hat" on: a blank new tab becomes a tab in Hat 1.
+  await send({ type: "setSetting", key: "auto", value: true });
   let t = await browser.tabs.create({ url: "about:newtab" });
   await fire("tabs.onCreated", { ...t });
   check("⌘T opens a new tab in a new hat", hats().length === 1 && !tabs.has(t.id) && userTabs().every(x => x.cookieStoreId !== "firefox-default"));
@@ -47,20 +61,6 @@
   check("badge: Work → WO", badgeText("Work", 1) === "WO");
   check("badge: Client A → CA", badgeText("Client A", 4) === "CA");
 
-  // Links from other apps: off without the permission, on with it, no stray tab.
-  const before = hats().length;
-  let r = await listeners["webRequest"][0]({ tabId: 999, cookieStoreId: "firefox-default", url: "https://mail.example/" });
-  check("without permission, links aren't moved", hats().length === before && !(r && r.cancel));
-  granted = true; await fire("perm.add");
-  const ext = await browser.tabs.create({ url: "about:blank" });
-  tabs.get(ext.id).status = "loading";
-  const created = fire("tabs.onCreated", { ...ext });                               // starts its 500ms wait
-  r = await listeners["webRequest"][0]({ tabId: ext.id, cookieStoreId: "firefox-default", url: "https://mail.example/" });
-  await settle(); await tick(600); await created;
-  const moved = userTabs().filter(x => x.url === "https://mail.example/");
-  check("with permission, a link moves into a new hat", r && r.cancel && moved.length === 1 && moved[0].cookieStoreId !== "firefox-default");
-  check("no extra empty hat left behind", hats().length === before + 1);
-
   // Real ⌘T: Firefox reports the tab as about:blank first, then switches it to about:newtab.
   let count = hats().length;
   const real = await browser.tabs.create({ url: "about:blank" });
@@ -71,8 +71,7 @@
   await tick(600); await realCreated;
   check("real ⌘T (blank, then New Tab page) gets a hat", hats().length === count + 1 && !tabs.has(real.id));
 
-  // A link from another app while "links from other apps" is off stays a normal tab.
-  granted = false; await fire("perm.remove");
+  // A link from another app that starts loading a web page stays a normal tab.
   count = hats().length;
   const link = await browser.tabs.create({ url: "about:blank" });
   tabs.get(link.id).status = "loading";
@@ -95,7 +94,6 @@
   check("kept hat survives", !!state.sessions[kept]);
 
   // Managing hats from the menu and the Manage hats page (by id, with no tab attached).
-  const send = (msg) => fire("runtime.onMessage", msg);
   await send({ type: "setSetting", key: "graceMinutes", value: 2 });
   const someTab = userTabs().find(x => state.sessions[x.cookieStoreId]);
   const d = await listeners["runtime.onMessage"][0]({ type: "describe", tab: someTab });

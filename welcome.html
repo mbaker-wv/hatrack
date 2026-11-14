@@ -11,36 +11,17 @@
       <img src="icons/icon-96.png" alt="" width="64" height="64">
       <div>
         <h1>Hatrack</h1>
-        <p class="lead">A different hat for every account. Use several accounts on the same site, side by side, without them getting mixed up.</p>
+        <p class="lead">Browse normally in your everyday Firefox. When you need a clean, signed-out session (a work account, a second login), put on a new hat.</p>
       </div>
     </header>
 
     <h2>A few quick steps</h2>
     <ol class="steps">
-      <li id="stepPasswords">
-        <strong>Password saving</strong>
-        <span id="pwStatus" class="status">Checking…</span>
-        <p>Hatrack turns this off for you, so Firefox can never fill in one account's password on another account's page.</p>
-      </li>
       <li>
         <strong>Turn off automatic work sign-in</strong>
         <p>Firefox can sign you into your computer's work or school account by itself, in every tab, which defeats the point.
           Add-ons aren't allowed to change this, so please do it once: open <b>Settings → Privacy &amp; Security</b> and uncheck
           <b>“Allow Windows single sign-on for Microsoft, work, and school accounts”</b>. If you don't see it, you're all set.</p>
-      </li>
-      <li id="links">
-        <strong>Links from other apps</strong> <span class="optional">optional</span>
-        <span id="linksStatus" class="status"></span>
-        <p>When you click a link in your email or chat app, Firefox opens it in its shared, everyday session, signed in as
-          whoever you used last. Turn this on and Hatrack moves those pages into a new hat instead. Firefox will ask to let
-          Hatrack <b>“access your data for all websites”</b>: it only uses that to catch a page before it loads. It doesn't read
-          or change the pages themselves.</p>
-        <label class="toggle inline">
-          <input id="catchLinks" type="checkbox">
-          Open links from other apps in a new hat
-        </label>
-        <p class="note">Using Multi-Account Containers' <b>“Always open this site in…”</b>? Leave this off, so the two add-ons
-          don't both grab the same link.</p>
       </li>
       <li>
         <strong>Remove Temporary Containers</strong>
@@ -55,7 +36,8 @@
 
     <h2>How to use it</h2>
     <table>
-      <tr><td><kbd>⌘T</kbd> / <kbd>Ctrl+T</kbd></td><td>A new tab in a new hat: fresh and signed out</td></tr>
+      <tr><td><kbd>⌘T</kbd> / <kbd>Ctrl+T</kbd></td><td>A normal new tab in your everyday session (unless you turn on “every new tab gets a hat” below)</td></tr>
+      <tr><td>The Hatrack button → <b>New hat</b></td><td>A new tab in a brand-new hat: fresh and signed out</td></tr>
       <tr><td><kbd>⌥⌘T</kbd> / <kbd>Ctrl+Alt+T</kbd></td><td>A new tab in the <em>same</em> hat, already signed in</td></tr>
       <tr><td>Right-click a link</td><td>“Open Link in New Hat”, for a signed-out copy or a different account</td></tr>
       <tr><td>Right-click a tab</td><td>“New Tab in This Hat” or “New Tab in a New Hat”</td></tr>

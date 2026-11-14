@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.2.0
+
+- **Normal tabs by default.** ⌘T opens an ordinary tab in your everyday Firefox session, so bookmarks and saved logins work. Use **New hat** in the toolbar button for a clean, signed-out session. "Every new tab gets its own hat" is still available as a setting.
+- **Fewer permissions.** Removed privacy settings, webRequest and the optional "all websites" access. Firefox's password saving is no longer turned off.
+- Removed "links from other apps" (it needed the all-websites permission).
+
 ## 1.1.0
 
 - **New name: Hatrack** (was Airlock), with a new top-hat icon. Sessions are now called "hats".
