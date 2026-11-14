@@ -34,8 +34,6 @@ A few things that make it nice to use day to day:
 - The Hatrack button shows which hat you're in, in its color, and lists all your hats so you can jump between them.
 - A Manage hats page lets you rename, recolor, keep or forget any hat, all in one place.
 - Closed a tab by accident? Hats wait a couple of minutes before they're erased, so ⇧⌘T brings it back still signed in.
-- Optional: links you click in other apps can open in a new hat too.
-- Firefox's password saving stays off, so it can't fill in the wrong password.
 - Don't want every tab sealed off? Turn automatic mode off and only open Hatrack tabs when you ask for them.
 
 Managing a few admin dashboards for different organizations? Sign in once, then press ⌥⌘T to open the other tools for that same organization in the same hat, with no extra sign-in prompts.
@@ -48,7 +46,7 @@ Hatrack doesn't collect anything, doesn't track you, and never connects to the i
 Only Mozilla's reviewers see these, so they're precise rather than friendly.
 
 ```
-Hatrack uses contextualIdentities to give each tab its own container. When a blank new tab opens in the default container (firefox-default), Hatrack opens a replacement tab in a fresh container and closes the blank one. The <all_urls> host permission is optional (requested only when the user enables "links from other apps" on the options page, and removed when they disable it). With it, webRequest blocking on main_frame requests is used only to detect pages about to load in the default container and reopen them in a new container; requests in other containers are passed through untouched. browsingData.remove is called only with the cookieStoreId of containers Hatrack created, after their last tab closes (following a user-configurable wait, 2 minutes by default), on browser startup, or when the user clicks "Forget" on a kept session. privacy.services.passwordSavingEnabled is set to false so the password manager can't autofill credentials across sessions. No remote code, no network requests, no minified code, no build step. Source: https://github.com/mbaker-wv/hatrack
+Hatrack uses contextualIdentities to give each tab its own container. When a blank new tab opens in the default container (firefox-default), Hatrack opens a replacement tab in a fresh container and closes the blank one. browsingData.remove is called only with the cookieStoreId of containers Hatrack created, after their last tab closes (following a user-configurable wait, 2 minutes by default), on browser startup, or when the user clicks "Forget" on a kept session. By default Hatrack does nothing to normal tabs; the optional "every new tab gets a hat" setting replaces a blank new tab with one in a fresh container. No remote code, no network requests, no minified code, no build step. Source: https://github.com/mbaker-wv/hatrack
 ```
 
 ## Screenshots

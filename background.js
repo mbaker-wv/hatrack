@@ -1,20 +1,17 @@
-// Hatrack: every new tab gets its own private container (a "hat").
+// Hatrack: open a new tab in its own private container (a "hat") whenever you want one.
 // A hat's cookies, logins and site data are erased shortly after its last tab closes,
 // unless you mark it "Keep". This add-on collects no data and makes no network requests.
 
 const COLORS = ["blue", "green", "orange", "purple", "red", "yellow", "turquoise", "pink"];
 const DEFAULT_STORE = "firefox-default";
 const NEW_TAB_URLS = new Set(["about:newtab", "about:home"]);
-const ALL_SITES = { origins: ["<all_urls>"] };
 
 // sessions[cookieStoreId] = { number, kept, emptySince? }. Only containers listed here are ours.
-// auto: every new tab gets its own hat (otherwise only on request).
-// catchLinks: pages opening in Firefox's shared session (links from other apps, bookmarks)
-//   move into a new hat. Needs the optional "all websites" permission.
+// auto: every new tab gets its own hat. Off by default: tabs use your normal Firefox
+//   session (bookmarks, saved logins) and a hat is opened only when you ask for one.
 // graceMinutes: how long a hat waits after its last tab closes before it's erased, so an
 //   accidentally closed tab can be reopened (⇧⌘T) still signed in.
-let state = { sessions: {}, auto: true, catchLinks: true, graceMinutes: 2 };
-let canCatchLinks = false;
+let state = { sessions: {}, auto: false, graceMinutes: 2 };
 const ready = start();
 
 async function start() {
@@ -25,22 +22,13 @@ async function start() {
     if (!existing.has(id)) delete state.sessions[id];
   }
   // None of these may stop Hatrack from starting: every tab handler waits on `ready`.
-  await refreshLinkPermission().catch(() => {});
   await cleanup({ now: true }).catch(() => {});   // hats left behind when Firefox last closed
-  // Firefox's password saving stays off, so it can't autofill another account's password.
-  await browser.privacy.services.passwordSavingEnabled.set({ value: false }).catch(() => {});
   await updateAllBadges().catch(() => {});
 }
 
 function save() {
   return browser.storage.local.set({ state });
 }
-
-async function refreshLinkPermission() {
-  canCatchLinks = await browser.permissions.contains(ALL_SITES);
-}
-browser.permissions.onAdded.addListener(refreshLinkPermission);
-browser.permissions.onRemoved.addListener(refreshLinkPermission);
 
 // The lowest number no current hat is using, so numbers (and colors) stay small and reused.
 function nextNumber() {
@@ -151,19 +139,10 @@ async function updateAllBadges() {
 browser.tabs.onActivated.addListener(({ windowId }) => updateBadge(windowId).catch(() => {}));
 browser.contextualIdentities.onUpdated.addListener(() => updateAllBadges());
 
-// First install: show the welcome and setup page. After an update that left "links from
-// other apps" switched on but without its (now optional) permission, show where to allow it.
+// First install: show the welcome and setup page.
 browser.runtime.onInstalled.addListener(async ({ reason }) => {
-  await ready;
-  if (reason === "install") {
-    browser.tabs.create({ url: browser.runtime.getURL("welcome.html") });
-  } else if (reason === "update" && state.auto && state.catchLinks && !canCatchLinks) {
-    browser.tabs.create({ url: browser.runtime.getURL("welcome.html#links") });
-  }
+  if (reason === "install") browser.tabs.create({ url: browser.runtime.getURL("welcome.html") });
 });
-
-// Tabs whose page load was already moved into a new hat.
-const movedTabs = new Set();
 
 // ⌘T / new window: swap Firefox's blank tab for one in a brand-new hat.
 browser.tabs.onCreated.addListener(async (tab) => {
@@ -174,7 +153,6 @@ browser.tabs.onCreated.addListener(async (tab) => {
     // link from another app also starts as about:blank. Give it a moment: a New Tab page
     // or a still-empty tab gets a hat; a tab that started loading a web page is left alone.
     await new Promise(resolve => setTimeout(resolve, 500));
-    if (movedTabs.has(tab.id)) return;
     const current = await browser.tabs.get(tab.id).catch(() => null);
     const isNewTab = current && current.cookieStoreId === DEFAULT_STORE
       && (NEW_TAB_URLS.has(current.url) || (current.url === "about:blank" && current.status === "complete"));
@@ -186,24 +164,7 @@ browser.tabs.onCreated.addListener(async (tab) => {
   await browser.tabs.remove(tab.id);
 });
 
-// Any page about to load in Firefox's shared default container (a link from another app,
-// a bookmark, a restored tab) is moved into a new hat instead. Only runs when the
-// optional "all websites" permission is granted.
-browser.webRequest.onBeforeRequest.addListener(async (details) => {
-  await ready;
-  if (!state.auto || !state.catchLinks || !canCatchLinks || details.tabId < 0 || details.incognito
-      || details.cookieStoreId !== DEFAULT_STORE || movedTabs.has(details.tabId)) return {};
-  movedTabs.add(details.tabId);
-  const tab = await browser.tabs.get(details.tabId);
-  await openInNewSession(tab, details.url);
-  await browser.tabs.remove(details.tabId);
-  return { cancel: true };
-}, { urls: ["<all_urls>"], types: ["main_frame"] }, ["blocking"]);
-
-browser.tabs.onRemoved.addListener((tabId) => {
-  movedTabs.delete(tabId);
-  scheduleCleanup();
-});
+browser.tabs.onRemoved.addListener(scheduleCleanup);
 
 // Shortcut and right-click menus.
 browser.commands.onCommand.addListener(async (command) => {
@@ -252,18 +213,21 @@ async function forgetHat(id) {
 }
 
 function settings() {
-  return { auto: state.auto, catchLinks: state.catchLinks, canCatchLinks, graceMinutes: state.graceMinutes };
+  return { auto: state.auto, graceMinutes: state.graceMinutes };
 }
 
 browser.runtime.onMessage.addListener(async (msg) => {
+  try { return await handleMessage(msg); } catch (e) { return { error: String(e && e.message || e) }; }
+});
+
+async function handleMessage(msg) {
   await ready;
   const hat = msg.id && state.sessions[msg.id];
   switch (msg.type) {
     case "settings":
-      await refreshLinkPermission();
       return settings();
     case "setSetting":
-      if (["auto", "catchLinks"].includes(msg.key)) state[msg.key] = !!msg.value;
+      if (msg.key === "auto") state.auto = !!msg.value;
       if (msg.key === "graceMinutes") state.graceMinutes = Math.max(0, Number(msg.value) || 0);
       await save();
       if (msg.key === "graceMinutes") await cleanup();
@@ -312,10 +276,15 @@ browser.runtime.onMessage.addListener(async (msg) => {
       return;
     case "hatForget":
       return forgetHat(msg.id);
+    case "forgetEmpty":
+      for (const [id, s] of Object.entries(state.sessions)) {
+        if (!s.kept && (await browser.tabs.query({ cookieStoreId: id })).length === 0) await forgetHat(id);
+      }
+      return;
     case "forgetUnkept":
       for (const [id, s] of Object.entries(state.sessions)) {
         if (!s.kept) await forgetHat(id);
       }
       return;
   }
-});
+}

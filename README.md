@@ -41,10 +41,7 @@ Hatrack gives every tab a clean slate, so you decide which account goes where.
   You can change the wait, or make it immediate, on the setup page.
 - **Want to stay signed in to an account you use every day?** Tick **Keep** in the toolbar
   button. It stays until you click **Forget**.
-- **Links from other apps** (email, chat, documents) can open in a new hat instead of
-  whatever you were last signed into. This is optional: switch it on from the setup page.
-- **Prefer to choose when to use it?** Turn off "Give every new tab its own hat" in the
-  toolbar button. Then normal tabs stay normal, and you open Hatrack tabs when you want them.
+- **Normal tabs stay normal.** ⌘T opens an ordinary tab in your everyday session, with your bookmarks and saved logins. Click **New hat** in the toolbar button when you want a clean, signed-out session. (You can switch on "every new tab gets its own hat" if you prefer the old behavior.)
 
 ## One setting to change
 
@@ -55,9 +52,6 @@ automatically, in every tab. Add-ons aren't allowed to change it, so please turn
 *"Allow Windows single sign-on for Microsoft, work, and school accounts"* (if you see it).
 
 That's Firefox's own name for the setting. Hatrack works with any website.
-
-Hatrack turns off Firefox's password saving for you, so it can never fill in one account's
-password on another account's page.
 
 ## Privacy
 
@@ -71,9 +65,7 @@ in plain terms:
 | Firefox says Hatrack can… | Why it needs that |
 |---|---|
 | Clear recent browsing history, cookies, and related data | To erase a hat's logins when you close it, and only for hats Hatrack created. |
-| Read and modify privacy settings | To keep Firefox's password saving turned off. |
 | Access browser tabs | To open new tabs in the right hat. |
-| Access your data for all websites *(only if you turn on "links from other apps")* | To catch a page *before* it loads in Firefox's shared session and open it in its own hat instead. Hatrack doesn't read or change the pages themselves. Turn the option off and Hatrack gives this permission back. |
 
 The full source code is right here in this repository: plain, readable JavaScript with no
 hidden or compressed code.

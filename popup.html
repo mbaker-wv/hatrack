@@ -14,22 +14,15 @@
       <input id="keep" type="checkbox">
       Keep this hat (stay signed in after closing its tabs)
     </label>
+    <button id="newSame">New tab in this hat <span class="key">⌥⌘T</span></button>
   </section>
-  <p id="none" class="muted" hidden>This tab doesn't have a hat yet.</p>
-
-  <button id="newSame" hidden>New tab in this hat <span class="key">⌥⌘T</span></button>
-  <button id="newIsolated">New tab in a new hat <span class="key">⌘T</span></button>
+  <p id="none" class="muted" hidden>This tab is in your normal session.</p>
 
   <section id="hatsSection" hidden>
-    <h2>Your hats</h2>
+    <h2>Open a tab in…</h2>
     <ul id="hatList"></ul>
   </section>
 
-  <hr>
-  <label class="check toggle">
-    <input id="auto" type="checkbox">
-    Give every new tab its own hat
-  </label>
   <nav class="links">
     <a id="manage" href="#">Manage hats</a>
     <a id="help" href="#">Setup &amp; help</a>

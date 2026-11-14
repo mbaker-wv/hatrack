@@ -7,8 +7,10 @@ const COLORS = {
   red: "#ff613d", yellow: "#ffcb00", turquoise: "#00c79a", pink: "#ff4bda",
 };
 
-function send(type, extra = {}) {
-  return browser.runtime.sendMessage({ type, ...extra });
+async function send(type, extra = {}) {
+  const r = await browser.runtime.sendMessage({ type, ...extra });
+  if (r && r.error) alert("Something went wrong: " + r.error);
+  return r;
 }
 
 async function windowId() {
@@ -87,8 +89,8 @@ function hatRow(hat) {
     controls.append(button("Close tabs", () => send("hatClose", { id: hat.id }).then(render),
       hat.kept ? "Close its tabs; it stays signed in" : "Close its tabs; it's erased after the usual wait"));
   }
-  controls.append(button("Forget", async () => {
-    if (confirm(`Forget "${hat.name}"? Its tabs close and you're signed out right away.`)) {
+  controls.append(button("Delete", async () => {
+    if (confirm(`Delete "${hat.name}"? Its tabs close and you're signed out right away.`)) {
       await send("hatForget", { id: hat.id });
       render();
     }
@@ -110,6 +112,7 @@ async function render() {
 $("newHat").onclick = async () => {
   const [tab] = await browser.tabs.query({ active: true, currentWindow: true });
   await send("newIsolated", { tab });
+  render();
 };
 $("forgetUnkept").onclick = async () => {
   if (confirm("Erase every hat you haven't kept? Their tabs close and you're signed out of them right away.")) {
